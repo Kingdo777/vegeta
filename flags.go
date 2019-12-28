@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
+	vegeta "github.com/Kingdo777/vegeta/lib"
 	"github.com/c2h5oh/datasize"
-	vegeta "github.com/tsenart/vegeta/lib"
 )
 
 // headers is the http.Header used in each target request

@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/tsenart/vegeta/internal/resolver"
-	vegeta "github.com/tsenart/vegeta/lib"
+	"github.com/Kingdo777/vegeta/internal/resolver"
+	"github.com/Kingdo777/vegeta/lib"
 )
 
 func attackCmd() command {
@@ -55,6 +55,7 @@ func attackCmd() command {
 	fs.Var(&opts.laddr, "laddr", "Local IP address")
 	fs.BoolVar(&opts.keepalive, "keepalive", true, "Use persistent connections")
 	fs.StringVar(&opts.unixSocket, "unix-socket", "", "Connect over a unix socket. This overrides the host address in target URLs")
+	fs.StringVar(&opts.poissonFile, "poisson-file", "", "指定poisson的数据文件，文件包含了每个请求的发送间隔")
 	systemSpecificFlags(fs, opts)
 
 	return command{fs, func(args []string) error {
@@ -97,11 +98,22 @@ type attackOpts struct {
 	keepalive    bool
 	resolvers    csl
 	unixSocket   string
+	poissonFile  string
 }
 
 // attack validates the attack arguments, sets up the
 // required resources, launches the attack and writes the results
 func attack(opts *attackOpts) (err error) {
+
+	var poissonData []string
+	if opts.poissonFile != "" {
+		data, err := ioutil.ReadFile(opts.poissonFile)
+		if err != nil {
+			return err
+		}
+		poissonData = strings.Split(string(data), ",")
+	}
+
 	if opts.maxWorkers == vegeta.DefaultMaxWorkers && opts.rate.Freq == 0 {
 		return fmt.Errorf("-rate=0 requires setting -max-workers")
 	}
@@ -187,7 +199,7 @@ func attack(opts *attackOpts) (err error) {
 		vegeta.ChunkedBody(opts.chunked),
 	)
 
-	res := atk.Attack(tr, opts.rate, opts.duration, opts.name)
+	res := atk.Attack(tr, opts.rate, opts.duration, opts.name, poissonData)
 	enc := vegeta.NewEncoder(out)
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)

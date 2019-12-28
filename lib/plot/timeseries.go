@@ -5,7 +5,7 @@ import (
 	"time"
 
 	tsz "github.com/tsenart/go-tsz"
-	"github.com/tsenart/vegeta/lib/lttb"
+	"github.com/Kingdo777/vegeta/lib/lttb"
 )
 
 // An in-memory timeSeries of points with high compression of

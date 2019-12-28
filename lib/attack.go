@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"sync"
 	"time"
 
@@ -250,7 +251,7 @@ func ProxyHeader(h http.Header) func(*Attacker) {
 // the rate specified by the Pacer. When the duration is zero the attack
 // runs until Stop is called. Results are sent to the returned channel as soon
 // as they arrive and will have their Attack field set to the given name.
-func (a *Attacker) Attack(tr Targeter, p Pacer, du time.Duration, name string) <-chan *Result {
+func (a *Attacker) Attack(tr Targeter, p Pacer, du time.Duration, name string, poissonData []string) <-chan *Result {
 	var wg sync.WaitGroup
 
 	workers := a.workers
@@ -271,13 +272,23 @@ func (a *Attacker) Attack(tr Targeter, p Pacer, du time.Duration, name string) <
 		defer close(ticks)
 
 		began, count := time.Now(), uint64(0)
+		wait, stop := 1*time.Second, false
+		poissonDataLen := uint64(len(poissonData))
 		for {
 			elapsed := time.Since(began)
 			if du > 0 && elapsed > du {
 				return
 			}
-
-			wait, stop := p.Pace(elapsed, count)
+			if poissonDataLen == uint64(0) {
+				wait, stop = p.Pace(elapsed, count)
+			} else {
+				if count < poissonDataLen {
+					intD, _ := strconv.Atoi(poissonData[count])
+					wait, stop = time.Duration(uint64(intD)), false
+				} else {
+					return
+				}
+			}
 			if stop {
 				return
 			}
