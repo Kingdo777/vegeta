@@ -274,17 +274,20 @@ func (a *Attacker) Attack(tr Targeter, p Pacer, du time.Duration, name string, p
 		began, count := time.Now(), uint64(0)
 		wait, stop := 1*time.Second, false
 		poissonDataLen := uint64(len(poissonData))
+		if poissonDataLen != 0 {
+			du = 0
+		}
 		for {
 			elapsed := time.Since(began)
 			if du > 0 && elapsed > du {
 				return
 			}
-			if poissonDataLen == uint64(0) {
+			if poissonDataLen == uint64(0) || count == 0 {
 				wait, stop = p.Pace(elapsed, count)
 			} else {
-				if count < poissonDataLen {
-					intD, _ := strconv.Atoi(poissonData[count])
-					wait, stop = time.Duration(uint64(intD)), false
+				if count <= poissonDataLen {
+					intD, _ := strconv.Atoi(poissonData[count-1])
+					wait, stop = time.Duration(uint64(intD))*time.Millisecond, false
 				} else {
 					return
 				}
