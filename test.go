@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"strings"
 )
@@ -15,5 +16,5 @@ func main() {
 		}
 		poissonData = strings.Split(string(data), ",")
 	}
-	print(poissonData[19])
+	fmt.Printf("%s %s", poissonData[19], "213")
 }
